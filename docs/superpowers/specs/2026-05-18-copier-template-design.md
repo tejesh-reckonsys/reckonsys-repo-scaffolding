@@ -154,13 +154,14 @@ DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/{{ project_na
 ## Docker Layout
 
 ```
-Dockerfile                          # multi-stage, at repo root
+Dockerfile                          # multi-stage, at repo root; includes scripts/
 docker/
-├── docker-compose.yml              # full stack: app + external services
+├── Caddyfile                       # Caddy reverse proxy config (HTTP, gzip)
+├── docker-compose.yml              # full stack: caddy + app + external services
 └── docker-compose.services.yml    # external services only (postgres etc.)
 ```
 
-`docker-compose.services.yml` is the target for `make services` — lets developers run dependencies locally without running the app inside Docker.
+`docker-compose.services.yml` is the target for `make services` — lets developers run dependencies locally without running the app inside Docker. In the full stack, Caddy fronts the app on port 80, handles gzip, and proxies to the app container internally.
 
 ---
 
@@ -205,10 +206,11 @@ Two parallel jobs:
 - FastAPI
 - uvicorn
 - Python 3.12+ (configurable)
-- uv (package management)
+- uv (package management) — also used to install Copier via `uv tool install copier`
 - Ruff (lint + format)
 - pytest
-- pre-commit
+- pre-commit (in dev dependencies)
+- Caddy 2 (reverse proxy in Docker Compose full stack — HTTP, gzip)
 - SQLAlchemy 2.x async + asyncpg + Alembic (when postgres enabled)
 
 ---
