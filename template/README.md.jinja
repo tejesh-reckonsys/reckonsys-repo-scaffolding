@@ -1,0 +1,37 @@
+# {{ project_name }}
+
+{{ project_description }}
+
+## Development
+
+```bash
+make install    # install dependencies
+make dev        # start development server (http://localhost:8000)
+make test       # run tests
+make lint       # check linting
+make format     # auto-format code
+```
+
+## Adding a Feature Module
+
+1. Create `app/<feature>/` with `router.py`, `service.py`, `schemas.py`{% if use_postgres %}, `models.py`{% endif %}
+2. Register the router in `app/main.py`
+{% if use_postgres %}
+3. Import the model in `app/db/models.py`
+4. Generate and run migration: `make migration m="add <feature>"` then `make migrate`
+{% endif %}
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and update values before running.
+
+| Variable | Default | Description |
+|---|---|---|
+| `APP_ENV` | `development` | Environment name |
+| `DEBUG` | `true` | Enables /docs, verbose logging, loose CORS |
+| `SECRET_KEY` | `changeme` | **Change in production** |
+| `HOST` | `0.0.0.0` | Bind host |
+| `PORT` | `8000` | Bind port |
+{% if use_postgres %}
+| `DATABASE_URL` | `postgresql+asyncpg://...` | Async SQLAlchemy DB URL |
+{% endif %}
