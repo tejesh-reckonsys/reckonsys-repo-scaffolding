@@ -1,0 +1,21 @@
+_subdirectory: template
+_templates_suffix: .jinja
+
+project_name:
+    type: str
+    help: "Project name (slug, e.g. my-service)"
+
+project_description:
+    type: str
+    default: ""
+    help: "One-line description of the service"
+
+python_version:
+    type: str
+    default: "3.12"
+    help: "Python version (e.g. 3.12, 3.13)"
+
+use_postgres:
+    type: bool
+    default: false
+    help: "Include PostgreSQL, SQLAlchemy async, and Alembic?"
