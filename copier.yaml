@@ -2,11 +2,6 @@ _subdirectory: template
 _templates_suffix: .jinja
 _answers_file: .copier-answers.yml
 
-_tasks:
-  - "git init"
-  - "git add ."
-  - "git commit -m 'chore: initial scaffold from reckonsys-repo-scaffolding'"
-
 project_name:
     type: str
     help: "Project name (slug, e.g. my-service)"
