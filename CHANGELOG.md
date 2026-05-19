@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.1.1 — 2026-05-19
+
+- **Fix**: Add `.copier-answers.yml` template file so `copier update` works on generated projects
+- **Fix**: Docker Compose app build context set to `..` (project root); Caddyfile volume path corrected
+- **Fix**: `dispatch()` uses `RequestResponseEndpoint` type instead of `object`
+- **Fix**: `conftest.py` client fixture return type is `AsyncGenerator[AsyncClient, None]` to suppress IDE warnings
+- **Fix**: Bump `pydantic-settings>=2.10.0` and OTel packages for Python 3.14 compatibility
+- **Fix**: Add `[tool.uv] exclude-newer = "7 days"` for reproducible dependency resolution
+- **Feat**: Add McCabe complexity lint rule (`C90`, `max-complexity = 10`)
+- **Feat**: Non-postgres `get_users()` returns seed data instead of empty list
+
 ## v1.1.0 — 2026-05-19
 
 - **structlog**: Replaces `logging.basicConfig` — JSON in production, colored console in dev, stdlib bridge routes uvicorn/SQLAlchemy logs through the same pipeline
