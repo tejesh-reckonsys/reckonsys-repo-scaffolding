@@ -19,3 +19,8 @@ use_postgres:
     type: bool
     default: false
     help: "Include PostgreSQL, SQLAlchemy async, and Alembic?"
+
+use_worker:
+    type: bool
+    default: false
+    help: "Include arq async worker with Redis?"
