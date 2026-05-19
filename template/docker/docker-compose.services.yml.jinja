@@ -1,4 +1,6 @@
 {% if use_postgres or use_worker %}
+name: {{ project_name }}
+
 services:
 {% if use_postgres %}
   db:

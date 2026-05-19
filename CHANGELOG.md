@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.5 — 2026-05-19
+
+- **Fix**: Add `name: {project_name}` to both Docker Compose files so volumes are named `{project_name}_postgres_data` instead of `docker_postgres_data`
+- **Fix**: Generated README dev setup renders correctly for all four postgres/worker combinations — `make services` and `make migrate` always appear in the right order before `make dev`
+
 ## v1.1.4 — 2026-05-19
 
 - **Fix**: Bump Postgres image to `postgres:18`
