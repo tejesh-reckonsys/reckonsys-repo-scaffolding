@@ -15,11 +15,19 @@ services:
     env_file: .env
     expose:
       - "8000"
-    {% if use_postgres %}
+    {% if use_postgres or use_worker %}
     depends_on:
+      {% if use_postgres %}
       db:
         condition: service_healthy
+      {% endif %}
+      {% if use_worker %}
+      redis:
+        condition: service_healthy
+      {% endif %}
+    {% endif %}
 
+{% if use_postgres %}
   db:
     image: postgres:16
     environment:
@@ -35,7 +43,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+{% endif %}
 
+{% if use_worker %}
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+{% endif %}
+
+{% if use_postgres or use_worker %}
 volumes:
+  {% if use_postgres %}
   postgres_data:
-    {% endif %}
+  {% endif %}
+{% endif %}

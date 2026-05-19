@@ -1,5 +1,9 @@
-{% if use_postgres %}
+{% if use_postgres and use_worker %}
+.PHONY: install dev test lint format build up services down migrate migration worker shell
+{% elif use_postgres %}
 .PHONY: install dev test lint format build up services down migrate migration shell
+{% elif use_worker %}
+.PHONY: install dev test lint format build up services down worker shell
 {% else %}
 .PHONY: install dev test lint format build up services down shell
 {% endif %}
@@ -7,7 +11,7 @@
 install:
 	uv sync
 
-{% if use_postgres %}
+{% if use_postgres or use_worker %}
 dev: services
 {% else %}
 dev:
@@ -42,6 +46,11 @@ migrate:
 
 migration:
 	uv run alembic revision --autogenerate -m "$(m)"
+
+{% endif %}
+{% if use_worker %}
+worker:
+	uv run arq worker.main.WorkerSettings
 
 {% endif %}
 shell:

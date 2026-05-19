@@ -1,0 +1,32 @@
+{% if use_worker %}
+import structlog
+from arq.connections import RedisSettings
+
+from app.core.config import settings
+from app.core.logging import setup_logging
+
+setup_logging()
+
+logger = structlog.get_logger()
+
+
+async def startup(ctx: dict) -> None:
+    logger.info("worker starting")
+
+
+async def shutdown(ctx: dict) -> None:
+    logger.info("worker stopping")
+
+
+async def example_task(ctx: dict, *, message: str) -> str:
+    """Example arq task — replace with your actual tasks."""
+    logger.info("example_task", message=message)
+    return f"processed: {message}"
+
+
+class WorkerSettings:
+    redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
+    functions = [example_task]
+    on_startup = startup
+    on_shutdown = shutdown
+{% endif %}
