@@ -5,11 +5,12 @@
 ## Development setup
 
 ```bash
-cp .env.example .env   # then edit SECRET_KEY at minimum
-make install           # install dependencies
-{% if use_postgres or use_worker %}make services          # start external services (Docker required)
-{% if use_postgres %}make migrate           # apply migrations (first run only)
-{% endif %}{% endif %}make dev               # start server at http://localhost:8000
+cp .env.example .env           # then edit SECRET_KEY at minimum
+make install                   # install dependencies
+uv run pre-commit install      # set up git hooks (run once)
+{% if use_postgres or use_worker %}make services                  # start external services (Docker required)
+{% if use_postgres %}make migrate                   # apply migrations (first run only)
+{% endif %}{% endif %}make dev                       # start server at http://localhost:8000
 ```
 
 {% if use_postgres or use_worker %}

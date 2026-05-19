@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.3 — 2026-05-19
+
+- **Fix**: Bump `ruff>=0.9.0` and pre-commit hook rev to `v0.9.0` — adds `py314` target-version support
+- **Fix**: Generated README now includes `uv run pre-commit install` in setup steps
+
 ## v1.1.2 — 2026-05-19
 
 - **Feat**: `bare` option — skips example modules (users, worker tasks), generates skeleton only
