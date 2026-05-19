@@ -20,7 +20,12 @@ async def create_user(db: AsyncSession, data: UserCreate) -> UserRead:
 {% else %}
 from app.users.schemas import UserRead
 
+_USERS = [
+    UserRead(id=1, name="Alice", email="alice@example.com"),
+    UserRead(id=2, name="Bob", email="bob@example.com"),
+]
+
 
 def get_users() -> list[UserRead]:
-    return []
+    return _USERS
 {% endif %}

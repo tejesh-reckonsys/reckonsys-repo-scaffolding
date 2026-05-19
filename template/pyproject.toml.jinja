@@ -35,7 +35,10 @@ target-version = "py{{ python_version | replace('.', '') }}"
 line-length = 88
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP"]
+select = ["E", "F", "I", "UP", "C90"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
