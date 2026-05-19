@@ -1,0 +1,21 @@
+FROM python:{{ python_version }}-slim AS base
+
+WORKDIR /app
+RUN pip install uv
+
+FROM base AS builder
+
+COPY pyproject.toml .
+RUN uv sync --no-dev --frozen
+
+FROM base AS runtime
+
+COPY --from=builder /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY app/ app/
+COPY scripts/ scripts/
+
+EXPOSE 8000
+
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
