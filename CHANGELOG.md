@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.7 — 2026-05-19
+
+- **Fix**: Postgres volume mount updated to `/var/lib/postgresql` (from `/var/lib/postgresql/data`) — required by `postgres:18` which manages its own subdirectory structure
+
 ## v1.1.6 — 2026-05-19
 
 - **Fix**: `env_file` in `docker-compose.yml` corrected to `../.env` (was resolving to `docker/.env` relative to compose file location)
