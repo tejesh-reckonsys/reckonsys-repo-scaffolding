@@ -1,0 +1,26 @@
+{% if use_postgres %}
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.users.models import User
+from app.users.schemas import UserCreate, UserRead
+
+
+async def get_users(db: AsyncSession) -> list[UserRead]:
+    result = await db.execute(select(User))
+    return [UserRead.model_validate(u) for u in result.scalars().all()]
+
+
+async def create_user(db: AsyncSession, data: UserCreate) -> UserRead:
+    user = User(name=data.name, email=data.email)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return UserRead.model_validate(user)
+{% else %}
+from app.users.schemas import UserRead
+
+
+def get_users() -> list[UserRead]:
+    return []
+{% endif %}
