@@ -1,0 +1,36 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+from fastapi import FastAPI
+
+from app.core.config import settings
+from app.core.logging import setup_logging
+from app.core.middleware import setup_middleware
+from app.users.router import router as users_router
+{% if use_postgres %}
+import app.db.models  # noqa: F401
+{% endif %}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    setup_logging()
+    yield
+
+
+app = FastAPI(
+    title="{{ project_name }}",
+    description="{{ project_description }}",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
+)
+
+setup_middleware(app)
+app.include_router(users_router, prefix="/users", tags=["users"])
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
