@@ -1,0 +1,48 @@
+{% if use_postgres %}
+.PHONY: install dev test lint format build up services down migrate migration shell
+{% else %}
+.PHONY: install dev test lint format build up services down shell
+{% endif %}
+
+install:
+	uv sync
+
+{% if use_postgres %}
+dev: services
+{% else %}
+dev:
+{% endif %}
+	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+test:
+	uv run pytest
+
+lint:
+	uv run ruff check .
+	uv run ruff format --check .
+
+format:
+	uv run ruff format .
+
+build:
+	docker build -t {{ project_name }} .
+
+up:
+	docker compose -f docker/docker-compose.yml up
+
+services:
+	docker compose -f docker/docker-compose.services.yml up -d
+
+down:
+	docker compose -f docker/docker-compose.yml down
+
+{% if use_postgres %}
+migrate:
+	uv run alembic upgrade head
+
+migration:
+	uv run alembic revision --autogenerate -m "$(m)"
+
+{% endif %}
+shell:
+	uv run python -c "import app; print('Shell ready')"
