@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     OTEL_SERVICE_NAME: str = "{{ project_name }}"
     OTEL_EXPORTER_OTLP_ENDPOINT: str = ""
     {% if use_postgres %}
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/{{ project_name }}"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:{{ postgres_port }}/{{ project_name }}"
     {% endif %}
     {% if use_worker %}
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://localhost:{{ redis_port }}"
     {% endif %}
 
 

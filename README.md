@@ -53,7 +53,11 @@ Open `http://localhost:8000/docs` to explore the API.
 | `project_description` | `""` | One-line description (used in pyproject.toml and README) |
 | `python_version` | `3.12` | Python version for the Docker base image and `requires-python` |
 | `use_postgres` | `false` | Enables SQLAlchemy 2.x async, Alembic migrations, and asyncpg |
+| `postgres_port` | `5432` | Host port to expose Postgres on (only asked when `use_postgres=true`) |
 | `use_worker` | `false` | Enables arq async worker with Redis |
+| `redis_port` | `6379` | Host port to expose Redis on (only asked when `use_worker=true`) |
+| `caddy_port` | `80` | Host port to expose Caddy (HTTP) on |
+| `bare` | `false` | Skip example modules (users, worker tasks); generate skeleton only |
 
 ## What you get
 

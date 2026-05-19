@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.2 — 2026-05-19
+
+- **Feat**: `bare` option — skips example modules (users, worker tasks), generates skeleton only
+- **Feat**: Configurable ports via copier questions (`postgres_port`, `redis_port`, `caddy_port`) with env-var override at runtime
+- **Feat**: arq worker example shows context pattern and enqueue-from-FastAPI hint; arq pool wired into FastAPI lifespan (`app.state.arq`)
+- **Fix**: Generated README now shows `make services` and `make migrate` steps before `make dev`
+
 ## v1.1.1 — 2026-05-19
 
 - **Fix**: Add `.copier-answers.yml` template file so `copier update` works on generated projects

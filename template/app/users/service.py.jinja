@@ -1,3 +1,4 @@
+{% if not bare %}
 {% if use_postgres %}
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,4 +29,5 @@ _USERS = [
 
 def get_users() -> list[UserRead]:
     return _USERS
+{% endif %}
 {% endif %}

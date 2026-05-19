@@ -1,4 +1,4 @@
-{% if use_postgres %}
+{% if use_postgres and not bare %}
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -11,22 +11,39 @@ logger = structlog.get_logger()
 
 
 async def startup(ctx: dict) -> None:
+    {% if not bare %}
+    # Initialize shared resources here, accessible in all tasks via ctx.
+    # Example: ctx["http"] = httpx.AsyncClient()
+    {% endif %}
     logger.info("worker starting")
 
 
 async def shutdown(ctx: dict) -> None:
+    {% if not bare %}
+    # Clean up shared resources here.
+    # Example: await ctx["http"].aclose()
+    {% endif %}
     logger.info("worker stopping")
 
+{% if not bare %}
 
-async def example_task(ctx: dict, *, message: str) -> str:
-    """Example arq task — replace with your actual tasks."""
-    logger.info("example_task", message=message)
-    return f"processed: {message}"
+async def example_task(ctx: dict, *, payload: str) -> dict:
+    """Example arq task — rename and adapt for your use case.
 
+    Enqueue from a FastAPI route:
+        await request.app.state.arq.enqueue_job("example_task", payload="hello")
+
+    Access shared resources set up in startup via ctx:
+        http: httpx.AsyncClient = ctx["http"]
+    """
+    logger.info("processing", payload=payload)
+    return {"payload": payload, "status": "done"}
+
+{% endif %}
 
 class WorkerSettings:
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
-    functions = [example_task]
+    functions = [{% if not bare %}example_task{% endif %}]
     on_startup = startup
     on_shutdown = shutdown
 {% endif %}

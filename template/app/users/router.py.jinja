@@ -1,3 +1,4 @@
+{%- if not bare %}
 {%- if use_postgres %}
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,4 +32,5 @@ router = APIRouter()
 @router.get("/", response_model=list[UserRead])
 def list_users() -> list[UserRead]:
     return service.get_users()
+{%- endif %}
 {%- endif %}

@@ -21,7 +21,29 @@ use_postgres:
     default: false
     help: "Include PostgreSQL, SQLAlchemy async, and Alembic?"
 
+postgres_port:
+    type: int
+    default: 5432
+    help: "Host port to expose Postgres on"
+    when: "{{ use_postgres }}"
+
 use_worker:
     type: bool
     default: false
     help: "Include arq async worker with Redis?"
+
+redis_port:
+    type: int
+    default: 6379
+    help: "Host port to expose Redis on"
+    when: "{{ use_worker }}"
+
+caddy_port:
+    type: int
+    default: 80
+    help: "Host port to expose Caddy (HTTP) on"
+
+bare:
+    type: bool
+    default: false
+    help: "Skip example modules (users, worker tasks); generate skeleton only"

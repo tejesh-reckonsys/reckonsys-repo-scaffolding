@@ -7,19 +7,16 @@
 ```bash
 cp .env.example .env   # then edit SECRET_KEY at minimum
 make install           # install dependencies
-make dev               # start server at http://localhost:8000
+{% if use_postgres or use_worker %}make services          # start external services (Docker required)
+{% if use_postgres %}make migrate           # apply migrations (first run only)
+{% endif %}{% endif %}make dev               # start server at http://localhost:8000
 ```
 
-{% if use_postgres %}
-`make dev` automatically starts Postgres via Docker before launching the server.
-Run `make migrate` the first time (and after any new migration) to apply schema changes.
-
-```bash
-make migrate           # apply pending migrations
-make dev               # then start the server
-```
-
+{% if use_postgres or use_worker %}
+`make services` starts {% if use_postgres %}Postgres{% endif %}{% if use_postgres and use_worker %} and {% endif %}{% if use_worker %}Redis{% endif %} in the background via Docker Compose.
+`make dev` also calls `make services` automatically, but running it first lets you check the services are healthy before starting the app.
 {% endif %}
+
 Open `http://localhost:8000/docs` to explore the API (only available when `DEBUG=true`).
 
 ## Common tasks
