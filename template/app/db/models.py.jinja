@@ -1,2 +1,6 @@
-{%- if use_postgres -%}
-{%- endif -%}
+{% if use_postgres %}
+# Import all feature models here so SQLAlchemy's metadata is fully populated.
+# Both alembic/env.py and app startup depend on this file.
+# tests/test_model_registry.py enforces every app/*/models.py is listed here.
+from app.users.models import User  # noqa: F401
+{% endif %}
