@@ -1,0 +1,41 @@
+{% if use_postgres %}
+import ast
+from pathlib import Path
+
+
+def _get_feature_model_files() -> list[Path]:
+    app_dir = Path(__file__).parent.parent / "app"
+    return [
+        p
+        for p in app_dir.glob("*/models.py")
+        if p.parent.name not in ("db", "core") and p.read_text().strip()
+    ]
+
+
+def _get_registered_modules() -> set[str]:
+    registry = Path(__file__).parent.parent / "app" / "db" / "models.py"
+    tree = ast.parse(registry.read_text())
+    modules = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            modules.add(node.module)
+    return modules
+
+
+def test_all_feature_models_registered_in_db_models() -> None:
+    model_files = _get_feature_model_files()
+    registered = _get_registered_modules()
+
+    missing = []
+    for model_file in model_files:
+        parts = model_file.parts
+        app_idx = next(i for i, p in enumerate(parts) if p == "app")
+        module = ".".join(parts[app_idx:]).removesuffix(".py")
+        if module not in registered:
+            missing.append(module)
+
+    assert not missing, (
+        f"These model modules are not imported in app/db/models.py: {missing}\n"
+        "Add them to app/db/models.py to register them with SQLAlchemy metadata."
+    )
+{% endif %}
