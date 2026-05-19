@@ -2,6 +2,28 @@
 
 Copier template for Reckonsys FastAPI backend services. Run one command and get a working service with FastAPI, Docker, Ruff, pytest, optional Postgres, and GitHub Actions CI — all wired up.
 
+## Why this template
+
+Starting a new backend service without a template means spending the first day (or two) wiring up the same things every time: project layout, settings management, logging, CORS, Docker, CI, linting config, test fixtures. It works, but it's toil — and it tends to be done slightly differently each time, making it harder to move between services.
+
+This template encodes the decisions we've already made:
+
+**Feature-first layout.** Code is grouped by feature (`app/users/`, `app/billing/`) rather than by type (`routers/`, `models/`). Related code stays together, and adding a new feature means adding one directory — not editing four.
+
+**Production defaults from day one.** `DEBUG=false` disables the API docs, tightens CORS, and switches to structured logging. This isn't something you add later — it's already there. The production checklist in the generated README makes it explicit.
+
+**A real example, not just scaffolding.** The `users/` module is a working feature with schemas, a service layer, a router, and (when Postgres is enabled) a SQLAlchemy model. It demonstrates the exact patterns you should follow for new features — and it comes with tests.
+
+**The model registry is enforced.** A common source of silent Alembic failures is a model that isn't imported at startup, so SQLAlchemy doesn't know about it. `tests/test_model_registry.py` scans for all feature models and fails CI if any are missing from `app/db/models.py`.
+
+**External services via Docker Compose, not mocks.** `make services` starts Postgres (and anything else you add) in the background. As the project grows — Redis, a queue, a third-party emulator — you add it to `docker-compose.services.yml` and it's automatically available for both dev and CI. No test-specific mocking of infrastructure.
+
+**`copier update` keeps projects current.** When the template improves, existing services can pull in the changes with `copier update`. Copier shows a diff and lets you resolve conflicts — the same workflow as a library upgrade, not a manual migration.
+
+The template asks four questions. Everything else is decided.
+
+---
+
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) — Python package manager
