@@ -9,8 +9,13 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "changeme"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
+    OTEL_SERVICE_NAME: str = "{{ project_name }}"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = ""
     {% if use_postgres %}
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/{{ project_name }}"
+    {% endif %}
+    {% if use_worker %}
+    REDIS_URL: str = "redis://localhost:6379"
     {% endif %}
 
 
