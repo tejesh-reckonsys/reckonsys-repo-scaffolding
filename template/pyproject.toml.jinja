@@ -6,11 +6,11 @@ requires-python = ">={{ python_version }}"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
-    "pydantic-settings>=2.6.0",
+    "pydantic-settings>=2.10.0",
     "structlog>=24.4.0",
-    "opentelemetry-sdk>=1.27.0",
-    "opentelemetry-instrumentation-fastapi>=0.48b0",
-    "opentelemetry-exporter-otlp-proto-http>=1.27.0",
+    "opentelemetry-sdk>=1.29.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-exporter-otlp-proto-http>=1.29.0",
     {% if use_postgres %}
     "sqlalchemy[asyncio]>=2.0.0",
     "alembic>=1.14.0",
@@ -40,6 +40,9 @@ select = ["E", "F", "I", "UP"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.uv]
+exclude-newer = "7 days"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
