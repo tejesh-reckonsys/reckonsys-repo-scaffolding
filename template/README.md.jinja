@@ -2,36 +2,153 @@
 
 {{ project_description }}
 
-## Development
+## Development setup
 
 ```bash
-make install    # install dependencies
-make dev        # start development server (http://localhost:8000)
-make test       # run tests
-make lint       # check linting
-make format     # auto-format code
+cp .env.example .env   # then edit SECRET_KEY at minimum
+make install           # install dependencies
+make dev               # start server at http://localhost:8000
 ```
 
-## Adding a Feature Module
-
-1. Create `app/<feature>/` with `router.py`, `service.py`, `schemas.py`{% if use_postgres %}, `models.py`{% endif %}
-2. Register the router in `app/main.py`
 {% if use_postgres %}
-3. Import the model in `app/db/models.py`
-4. Generate and run migration: `make migration m="add <feature>"` then `make migrate`
+`make dev` automatically starts Postgres via Docker before launching the server.
+Run `make migrate` the first time (and after any new migration) to apply schema changes.
+
+```bash
+make migrate           # apply pending migrations
+make dev               # then start the server
+```
+
+{% endif %}
+Open `http://localhost:8000/docs` to explore the API (only available when `DEBUG=true`).
+
+## Common tasks
+
+```bash
+make test       # run all tests
+make lint       # ruff check + format check
+make format     # auto-fix formatting
+make services   # start external services only ({% if use_postgres %}Postgres{% else %}add services here{% endif %})
+make up         # full Docker stack (Caddy + app{% if use_postgres %} + Postgres{% endif %})
+make down       # stop Docker stack
+```
+
+## Adding a feature module
+
+The `app/users/` module is a working example. Copy its structure for each new feature.
+
+**1. Create the module directory and files:**
+
+```
+app/
+└── billing/
+    ├── __init__.py
+    ├── schemas.py    # Pydantic request/response models
+    ├── service.py    # business logic, no HTTP concerns
+    ├── router.py     # FastAPI routes, calls service
+{% if use_postgres %}    └── models.py     # SQLAlchemy model{% endif %}
+```
+
+**2. Define your schemas** (`app/billing/schemas.py`):
+
+```python
+from pydantic import BaseModel
+
+class InvoiceCreate(BaseModel):
+    amount: float
+    description: str
+
+class InvoiceRead(InvoiceCreate):
+    id: int
+    model_config = {"from_attributes": True}
+```
+
+**3. Write the service** (`app/billing/service.py`):
+
+Keep HTTP concerns out of here — only business logic and DB calls.
+
+```python
+{% if use_postgres %}from sqlalchemy.ext.asyncio import AsyncSession
+from app.billing.schemas import InvoiceCreate, InvoiceRead
+
+async def create_invoice(db: AsyncSession, data: InvoiceCreate) -> InvoiceRead:
+    ...{% else %}from app.billing.schemas import InvoiceRead
+
+def get_invoices() -> list[InvoiceRead]:
+    return []{% endif %}
+```
+
+**4. Create the router** (`app/billing/router.py`):
+
+```python
+from fastapi import APIRouter{% if use_postgres %}, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.deps import get_db{% endif %}
+from app.billing import service
+from app.billing.schemas import InvoiceRead
+
+router = APIRouter()
+
+@router.get("/", response_model=list[InvoiceRead])
+{% if use_postgres %}async def list_invoices(db: AsyncSession = Depends(get_db)) -> list[InvoiceRead]:
+    return await service.get_invoices(db){% else %}def list_invoices() -> list[InvoiceRead]:
+    return service.get_invoices(){% endif %}
+```
+
+**5. Register the router** in `app/main.py`:
+
+```python
+from app.billing.router import router as billing_router
+
+app.include_router(billing_router, prefix="/billing", tags=["billing"])
+```
+
+{% if use_postgres %}
+**6. Register the model** in `app/db/models.py`:
+
+```python
+from app.billing.models import Invoice  # noqa: F401
+```
+
+This is required — Alembic and the app startup both rely on `db/models.py` to discover all SQLAlchemy tables. The `tests/test_model_registry.py` test will fail if you forget this step.
+
+**7. Generate and apply the migration:**
+
+```bash
+make migration m="add invoices table"
+make migrate
+```
 {% endif %}
 
-## Environment Variables
+## Environment variables
 
-Copy `.env.example` to `.env` and update values before running.
+Copy `.env.example` to `.env`. Never commit `.env`.
 
 | Variable | Default | Description |
 |---|---|---|
 | `APP_ENV` | `development` | Environment name |
-| `DEBUG` | `true` | Enables /docs, verbose logging, loose CORS |
-| `SECRET_KEY` | `changeme` | **Change in production** |
+| `DEBUG` | `true` | `false` in production: disables /docs, tightens CORS, enables structured logging |
+| `SECRET_KEY` | `changeme` | Change this before deploying |
 | `HOST` | `0.0.0.0` | Bind host |
 | `PORT` | `8000` | Bind port |
-{% if use_postgres %}
-| `DATABASE_URL` | `postgresql+asyncpg://...` | Async SQLAlchemy DB URL |
+{% if use_postgres %}| `DATABASE_URL` | `postgresql+asyncpg://...` | Async SQLAlchemy connection URL |
 {% endif %}
+
+## Production checklist
+
+- [ ] Set `DEBUG=false`
+- [ ] Set a strong random `SECRET_KEY`
+- [ ] Set `APP_ENV=production`
+{% if use_postgres %}
+- [ ] Point `DATABASE_URL` at your production database
+- [ ] Run `make migrate` on first deploy
+{% endif %}
+- [ ] Review and configure CORS allowed origins in `app/core/middleware.py`
+
+## Pre-commit hooks
+
+```bash
+uv run pre-commit install   # run once after cloning
+```
+
+Ruff will lint and format automatically on every commit.
