@@ -16,7 +16,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-    env_file: .env
+    env_file: ../.env
     expose:
       - "8000"
     {% if use_postgres or use_worker %}
@@ -40,7 +40,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: {{ project_name }}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-{{ postgres_port }}}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -55,7 +55,7 @@ services:
     image: redis:7-alpine
     container_name: {{ project_name }}-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-{{ redis_port }}}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

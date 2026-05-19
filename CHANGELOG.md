@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.6 — 2026-05-19
+
+- **Fix**: `env_file` in `docker-compose.yml` corrected to `../.env` (was resolving to `docker/.env` relative to compose file location)
+- **Fix**: `db` and `redis` port mappings in `docker-compose.yml` now use env vars (`${POSTGRES_PORT}`, `${REDIS_PORT}`) consistent with the services file
+
 ## v1.1.5 — 2026-05-19
 
 - **Fix**: Add `name: {project_name}` to both Docker Compose files so volumes are named `{project_name}_postgres_data` instead of `docker_postgres_data`
