@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.4 — 2026-05-19
+
+- **Fix**: Bump Postgres image to `postgres:18`
+- **Fix**: Add `container_name: {project_name}-{service}` to all Docker Compose services to prevent conflicts when running multiple projects locally
+
 ## v1.1.3 — 2026-05-19
 
 - **Fix**: Bump `ruff>=0.9.0` and pre-commit hook rev to `v0.9.0` — adds `py314` target-version support

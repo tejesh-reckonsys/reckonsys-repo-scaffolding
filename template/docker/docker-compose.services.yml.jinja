@@ -2,7 +2,8 @@
 services:
 {% if use_postgres %}
   db:
-    image: postgres:16
+    image: postgres:18
+    container_name: {{ project_name }}-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -20,6 +21,7 @@ services:
 {% if use_worker %}
   redis:
     image: redis:7-alpine
+    container_name: {{ project_name }}-redis
     ports:
       - "${REDIS_PORT:-{{ redis_port }}}:6379"
     healthcheck:
