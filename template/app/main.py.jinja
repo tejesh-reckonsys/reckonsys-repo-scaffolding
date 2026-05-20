@@ -16,13 +16,21 @@ from app.core.telemetry import setup_telemetry
 {% if not bare -%}
 from app.users.router import router as users_router
 {% endif %}
+{% if use_worker -%}
+from worker.main import job_deserializer, job_serializer
+{% endif -%}
+
 setup_logging()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     {% if use_worker %}
-    app.state.arq = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+    app.state.arq = await create_pool(
+        RedisSettings.from_dsn(settings.REDIS_URL),
+        job_serializer=job_serializer,
+        job_deserializer=job_deserializer,
+    )
     {% endif %}
     yield
     {% if use_worker %}

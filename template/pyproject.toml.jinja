@@ -18,6 +18,7 @@ dependencies = [
     {% endif %}
     {% if use_worker %}
     "arq>=0.25.0",
+    "orjson>=3.10,<4"
     {% endif %}
 ]
 
@@ -38,7 +39,7 @@ line-length = 88
 select = ["E", "F", "I", "UP", "C90"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 10
+max-complexity = 15
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

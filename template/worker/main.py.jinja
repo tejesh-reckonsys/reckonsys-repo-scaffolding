@@ -1,4 +1,5 @@
 {% if use_worker %}
+import orjson
 import structlog
 from arq.connections import RedisSettings
 
@@ -27,23 +28,38 @@ async def shutdown(ctx: dict) -> None:
 
 {% if not bare %}
 
-async def example_task(ctx: dict, *, payload: str) -> dict:
-    """Example arq task — rename and adapt for your use case.
+async def setup_user(ctx: dict, *, user_id: int, user_name: str, email: str) -> dict:
+    """
+    Example arq task to run on creating user.
 
     Enqueue from a FastAPI route:
-        await request.app.state.arq.enqueue_job("example_task", payload="hello")
+        await request.app.state.arq.enqueue_job(
+            "setup_user",
+            user_id=user_id,
+            user_name=user_name,
+            email=email,
+        )
 
     Access shared resources set up in startup via ctx:
         http: httpx.AsyncClient = ctx["http"]
     """
-    logger.info("processing", payload=payload)
-    return {"payload": payload, "status": "done"}
+    logger.info("Setting up user", user_id=user_id, user_name=user_name, email=email)
+    return {"status": "success"}
+    
 
 {% endif %}
 
+def job_serializer(data):
+    return orjson.dumps(data)
+
+def job_deserializer(data: bytes):
+    return orjson.loads(data.decode())
+
 class WorkerSettings:
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
-    functions = [{% if not bare %}example_task{% endif %}]
+    functions = [{% if not bare %}setup_user{% endif %}]
     on_startup = startup
     on_shutdown = shutdown
+    job_serializer = job_serializer
+    job_deserializer = job_deserializer
 {% endif %}

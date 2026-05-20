@@ -1,6 +1,6 @@
 {%- if not bare %}
 {%- if use_postgres %}
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends{%- if use_worker %}, Request{%- endif %}
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.deps import get_db
@@ -17,14 +17,21 @@ async def list_users(db: AsyncSession = Depends(get_db)) -> list[UserRead]:
 
 @router.post("/", response_model=UserRead, status_code=201)
 async def create_user(
-    data: UserCreate, db: AsyncSession = Depends(get_db)
+    {%- if use_worker%}request: Request, {%- endif %}data: UserCreate, db: AsyncSession = Depends(get_db)
 ) -> UserRead:
-    return await service.create_user(db, data)
+    user = await service.create_user(db, data){%- if use_worker %}
+    await request.app.state.arq.enqueue_job(
+        "setup_user",
+        user_id=user.id,
+        user_name=user.name,
+        email=user.email,
+    ){%- endif %}
+    return user
 {%- else %}
-from fastapi import APIRouter
+from fastapi import APIRouter{%- if use_worker %}, Request{%- endif %}
 
 from app.users import service
-from app.users.schemas import UserRead
+from app.users.schemas import UserCreate, UserRead
 
 router = APIRouter()
 
@@ -32,5 +39,19 @@ router = APIRouter()
 @router.get("/", response_model=list[UserRead])
 def list_users() -> list[UserRead]:
     return service.get_users()
+
+
+@router.post("/", response_model=UserRead, status_code=201)
+async def create_user(
+    {%- if use_worker%}request: Request, {%- endif %}data: UserCreate
+) -> UserRead:
+    user = service.create_user(data){%- if use_worker %}
+    await request.app.state.arq.enqueue_job(
+        "setup_user",
+        user_id=user.id,
+        user_name=user.name,
+        email=user.email,
+    ){%- endif %}
+    return user
 {%- endif %}
 {%- endif %}

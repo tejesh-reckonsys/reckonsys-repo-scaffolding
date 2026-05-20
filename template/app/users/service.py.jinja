@@ -19,7 +19,7 @@ async def create_user(db: AsyncSession, data: UserCreate) -> UserRead:
     await db.refresh(user)
     return UserRead.model_validate(user)
 {% else %}
-from app.users.schemas import UserRead
+from app.users.schemas import UserCreate, UserRead
 
 _USERS = [
     UserRead(id=1, name="Alice", email="alice@example.com"),
@@ -29,5 +29,10 @@ _USERS = [
 
 def get_users() -> list[UserRead]:
     return _USERS
+
+def create_user(data: UserCreate) -> UserRead:
+    user = UserRead(id=len(_USERS), name=data.name, email=data.email)
+    _USERS.append(user)
+    return user
 {% endif %}
 {% endif %}
