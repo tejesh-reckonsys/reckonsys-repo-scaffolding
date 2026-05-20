@@ -22,7 +22,7 @@ services:
 {% endif %}
 {% if use_worker %}
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: {{ project_name }}-redis
     ports:
       - "${REDIS_PORT:-{{ redis_port }}}:6379"

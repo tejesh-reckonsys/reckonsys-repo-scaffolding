@@ -5,16 +5,17 @@
 ## Development setup
 
 ```bash
-cp .env.example .env           # edit SECRET_KEY at minimum
-make install                   # install dependencies
-uv run pre-commit install      # set up git hooks (run once)
+cp .env.example .env                    # edit SECRET_KEY at minimum
+make install                            # install dependencies
+uv run pre-commit install               # set up git hooks (run once)
 {% if use_postgres or use_worker -%}
-make services                  # start external services (Docker required)
+make services                           # start external services (Docker required)
 {% endif -%}
 {% if use_postgres -%}
-make migrate                   # apply migrations (first run and after new migrations)
+make migration m="Initial migration"    # Generate mirations
+make migrate                            # apply migrations (first run and after new migrations)
 {% endif -%}
-make dev                       # start server at http://localhost:8000
+make dev                                # start server at http://localhost:8000
 ```
 
 {% if use_postgres or use_worker %}
@@ -30,8 +31,8 @@ make test       # run all tests
 make lint       # ruff check + format check
 make format     # auto-fix formatting
 make services   # start external services only ({% if use_postgres %}Postgres{% else %}add services here{% endif %})
-make up         # full Docker stack (Caddy + app{% if use_postgres %} + Postgres{% endif %})
-make down       # stop Docker stack
+make up         # full Docker stack as production
+make down       # stop Docker stack as production
 ```
 
 ## Adding a feature module
@@ -145,6 +146,8 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 - [ ] Run `make migrate` on first deploy
 {% endif %}
 - [ ] Review and configure CORS allowed origins in `app/core/middleware.py`
+
+> It is recommended to use docker/prod/docker-compose.yml for production. This automatically handles the above checklist other than configuring CORS.
 
 ## Pre-commit hooks
 

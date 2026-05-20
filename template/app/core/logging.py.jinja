@@ -1,48 +1,141 @@
 import logging
 import sys
+from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
+from typing import Any
 
 import structlog
 
 from app.core.config import settings
 
 
-def setup_logging() -> None:
-    level = logging.DEBUG if settings.DEBUG else logging.INFO
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
 
-    shared_processors = [
+
+def setup_logging() -> None:
+    """
+    Production-grade structlog configuration.
+
+    Features:
+    - Pretty logs in development
+    - JSON logs in production
+    - stdout + rotating file logs
+    - exception tracebacks
+    - request context support
+    - uvicorn compatible
+    - idempotent setup
+    """
+
+    if getattr(setup_logging, "_configured", False):
+        return
+
+    setup_logging._configured = True
+
+    log_level = logging.DEBUG if settings.DEBUG else logging.INFO
+
+    timestamper = structlog.processors.TimeStamper(fmt="iso")
+
+    shared_processors: list[Any] = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
+        timestamper,
         structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
     ]
 
-    renderer = (
-        structlog.dev.ConsoleRenderer()
-        if settings.DEBUG
-        else structlog.processors.JSONRenderer()
-    )
+    console_renderer = structlog.dev.ConsoleRenderer(colors=True)
+
+    json_renderer = structlog.processors.JSONRenderer()
+
+    structlog.reset_defaults()
 
     structlog.configure(
-        processors=shared_processors
-        + [structlog.stdlib.ProcessorFormatter.wrap_for_formatter],
+        processors=[
+            *shared_processors,
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
 
-    formatter = structlog.stdlib.ProcessorFormatter(
+    #
+    # Console formatter
+    #
+    console_formatter = structlog.stdlib.ProcessorFormatter(
         foreign_pre_chain=shared_processors,
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-            renderer,
+            console_renderer if settings.DEBUG else json_renderer,
         ],
     )
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
+    #
+    # File formatter (always JSON)
+    #
+    file_formatter = structlog.stdlib.ProcessorFormatter(
+        foreign_pre_chain=shared_processors,
+        processors=[
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            json_renderer,
+        ],
+    )
 
-    root = logging.getLogger()
-    root.handlers = [handler]
-    root.setLevel(level)
+    #
+    # Console handler
+    #
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(console_formatter)
+
+    #
+    # File handler
+    #
+    file_handler = TimedRotatingFileHandler(
+        filename=LOG_DIR / "app.log",
+        when="midnight",
+        interval=1,
+        backupCount=14,
+        utc=True,
+        encoding="utf-8",
+    )
+
+    file_handler.setFormatter(file_formatter)
+
+    #
+    # Root logger
+    #
+    root_logger = logging.getLogger()
+
+    root_logger.handlers.clear()
+
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
+
+    root_logger.setLevel(log_level)
+
+    # Avoid duplicate logs
+    root_logger.propagate = False
+
+    #
+    # Uvicorn loggers
+    #
+    for logger_name in (
+        "uvicorn",
+        "uvicorn.error",
+        "uvicorn.access",
+    ):
+        logger = logging.getLogger(logger_name)
+        logger.handlers.clear()
+        logger.propagate = True
+
+    #
+    # Global context
+    #
+    structlog.contextvars.bind_contextvars(
+        service="{{project_name}}",
+        environment=settings.APP_ENV,
+    )
+

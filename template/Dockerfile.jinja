@@ -1,21 +1,42 @@
-FROM python:{{ python_version }}-slim AS base
+FROM ghcr.io/astral-sh/uv:python{{ python_version }}-bookworm-slim AS base
 
 WORKDIR /app
-RUN pip install uv
 
 FROM base AS builder
 
-COPY pyproject.toml .
-RUN uv sync --no-dev --frozen
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
-FROM base AS runtime
+FROM python:{{ python_version }}-slim AS runtime
 
+# create user HERE (correct place)
+RUN useradd -m -u 10001 appuser
+
+# copy venv
 COPY --from=builder /app/.venv /app/.venv
+
 ENV PATH="/app/.venv/bin:$PATH"
 
+# copy app
 COPY app/ app/
 COPY scripts/ scripts/
 
-EXPOSE 8000
+# optional folders
+{% if use_worker %}
+COPY worker/ worker/
+{% endif %}
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+{% if use_postgres %}
+COPY alembic/ alembic/
+COPY alembic.ini alembic.ini
+{% endif %}
+
+# permissions
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+USER appuser
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
