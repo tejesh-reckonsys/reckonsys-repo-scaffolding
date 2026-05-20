@@ -88,8 +88,8 @@ def setup_logging() -> None:
         log_dir = Path(settings.LOG_DIR)
         log_dir.mkdir(parents=True, exist_ok=True)
 
+        file_handler = TimedRotatingFileHandler(
             filename=log_dir / "app.log",
-            file_handler = TimedRotatingFileHandler(
             when="midnight",
             interval=1,
             backupCount=14,
