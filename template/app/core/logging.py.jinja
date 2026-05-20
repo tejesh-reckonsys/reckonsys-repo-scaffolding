@@ -115,8 +115,8 @@ def setup_logging() -> None:
 
     root_logger.handlers.clear()
 
-    for handler handlers:
-      root_logger.addHandler(handler)
+    for handler in handlers:
+        root_logger.addHandler(handler)
 
     root_logger.setLevel(log_level)
 
@@ -142,4 +142,3 @@ def setup_logging() -> None:
         service="{{project_name}}",
         environment=settings.APP_ENV,
     )
-
