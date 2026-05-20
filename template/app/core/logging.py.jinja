@@ -9,10 +9,6 @@ import structlog
 from app.core.config import settings
 
 
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
-
-
 def setup_logging() -> None:
     """
     Production-grade structlog configuration.
