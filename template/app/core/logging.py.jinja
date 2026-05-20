@@ -73,16 +73,6 @@ def setup_logging() -> None:
         ],
     )
 
-    #
-    # File formatter (always JSON)
-    #
-    file_formatter = structlog.stdlib.ProcessorFormatter(
-        foreign_pre_chain=shared_processors,
-        processors=[
-            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-            json_renderer,
-        ],
-    )
 
     #
     # Console handler
@@ -91,18 +81,31 @@ def setup_logging() -> None:
     console_handler.setFormatter(console_formatter)
 
     #
-    # File handler
+    # File logging (optional)
     #
-    file_handler = TimedRotatingFileHandler(
-        filename=LOG_DIR / "app.log",
-        when="midnight",
-        interval=1,
-        backupCount=14,
-        utc=True,
-        encoding="utf-8",
-    )
+    if settings.LOG_TO_FILE:
+        log_dir = Path(settings.LOG_DIR)
+        log_dir.mkdir(parents=True, exist_ok=True)
 
-    file_handler.setFormatter(file_formatter)
+        file_handler = TimedRotatingFileHandler(
+            filename=log_dir / "app.log",
+            when="midnight",
+            interval=1,
+            backupCount=14,
+            utc=True,
+            encoding="utf-8",
+        )
+
+        file_formatter = structlog.stdlib.ProcessorFormatter(
+            foreign_pre_chain=shared_processors,
+            processors=[
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                json_renderer,
+            ],
+        )
+
+        file_handler.setFormatter(file_formatter)
+        handlers.append(file_handler)
 
     #
     # Root logger
