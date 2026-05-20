@@ -47,7 +47,6 @@ def setup_logging() -> None:
     ]
 
     console_renderer = structlog.dev.ConsoleRenderer(colors=True)
-
     json_renderer = structlog.processors.JSONRenderer()
 
     structlog.reset_defaults()
@@ -73,12 +72,14 @@ def setup_logging() -> None:
         ],
     )
 
+    handlers = []
 
     #
     # Console handler
     #
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(console_formatter)
+    handlers.append(console_handler)
 
     #
     # File logging (optional)
@@ -87,8 +88,8 @@ def setup_logging() -> None:
         log_dir = Path(settings.LOG_DIR)
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        file_handler = TimedRotatingFileHandler(
             filename=log_dir / "app.log",
+            file_handler = TimedRotatingFileHandler(
             when="midnight",
             interval=1,
             backupCount=14,
@@ -114,8 +115,8 @@ def setup_logging() -> None:
 
     root_logger.handlers.clear()
 
-    root_logger.addHandler(console_handler)
-    root_logger.addHandler(file_handler)
+    for handler handlers:
+      root_logger.addHandler(handler)
 
     root_logger.setLevel(log_level)
 
