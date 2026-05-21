@@ -5,56 +5,59 @@ set -eu
 # TCP WAIT HELPER
 # -------------------------
 wait_for_tcp() {
-    label="$1" host="$2" port="$3"
-    echo "[entrypoint] waiting for $label at $host:$port ..."
-    attempt=0
-    max=30
+  label="$1" host="$2" port="$3"
+  echo "[entrypoint] waiting for $label at $host:$port ..."
+  attempt=0
+  max=30
 
-    until python -c "import socket; s=socket.socket(); s.settimeout(2); s.connect(('$host', $port)); s.close()" 2>/dev/null; do
-        attempt=$((attempt + 1))
-        if [ "$attempt" -ge "$max" ]; then
-            echo "[entrypoint] $label not reachable after $max attempts" >&2
-            exit 1
-        fi
-        echo "[entrypoint] retry $attempt/$max ..."
-        sleep 2
-    done
+  until python -c "import socket; s=socket.socket(); s.settimeout(2); s.connect(('$host', $port)); s.close()" 2>/dev/null; do
+    attempt=$((attempt + 1))
+    if [ "$attempt" -ge "$max" ]; then
+      echo "[entrypoint] $label not reachable after $max attempts" >&2
+      exit 1
+    fi
+    echo "[entrypoint] retry $attempt/$max ..."
+    sleep 2
+  done
 
-    echo "[entrypoint] $label ready"
+  echo "[entrypoint] $label ready"
 }
 
 {% if use_postgres %}
-wait_for_postgres() {
-    url="${APP_DATABASE_URL:-}"
-    if [ -z "$url" ]; then
-        echo "[entrypoint] APP_DATABASE_URL not set, skipping postgres wait"
-        return
-    fi
+  url="${DATABASE_URL:-}"
+  wait_for_postgres() {
+  if [ -z "$url" ]; then
+    echo "[entrypoint] DATABASE_URL not set, skipping postgres wait"
+    return
+  fi
 
-    after_at="${url##*@}"
-    host_port="${after_at%%/*}"
-    db_host="${host_port%%:*}"
-    db_port="${host_port##*:}"
+  after_at="${url##*@}"
+  host_port="${after_at%%/*}"
+  db_host="${host_port%%:*}"
+  db_port="${host_port##*:}"
 
-    wait_for_tcp "postgres" "$db_host" "$db_port"
+  wait_for_tcp "postgres" "$db_host" "$db_port"
 }
 {% endif %}
 
 {% if use_worker %}
 wait_for_broker() {
-    servers="${APP_REDIS_URL:-}"
-    if [ -z "$servers" ]; then
-        echo "[entrypoint] APP_REDIS_URL not set, skipping broker wait"
-        return
-    fi
+  servers="${REDIS_URL:-}"
+  if [ -z "$servers" ]; then
+    echo "[entrypoint] REDIS_URL not set, skipping broker wait"
+    return
+  fi
 
-    host_port="${servers##*@}"
-    host_port="${host_port%%/*}"
+  url="${REDIS_URL#redis://}"
+  url="${url#rediss://}"
+  url="${url##*@}"
 
-    host="${host_port%%:*}"
-    port="${host_port##*:}"
+  host_port="${url%%/*}"
 
-    wait_for_tcp "redis" "$host" "$port"
+  host="${host_port%%:*}"
+  port="${host_port##*:}"
+
+  wait_for_tcp "redis" "$host" "$port"
 }
 {% endif %}
 
@@ -63,38 +66,38 @@ wait_for_broker() {
 # -------------------------
 case "${1:-}" in
 
+{% if use_postgres %}
+migrate)
   {% if use_postgres %}
-  migrate)
-    {% if use_postgres %}
-    wait_for_postgres
-    echo "[entrypoint] running alembic upgrade head"
-    exec alembic upgrade head
-    {% endif %}
-    ;;
+  wait_for_postgres
+  echo "[entrypoint] running alembic upgrade head"
+  exec alembic upgrade head
   {% endif %}
+  ;;
+{% endif %}
 
-  api)
-    {% if use_worker %}
-    wait_for_broker || true
-    {% endif %}
-    echo "[entrypoint] starting uvicorn"
-    exec uvicorn app.main:app --host 0.0.0.0 --port 8000
-    ;;
-
+api)
   {% if use_worker %}
-  worker)
-    wait_for_broker
-    echo "[entrypoint] starting worker (arq)"
-    exec python -m arq worker.main.WorkerSettings
-    ;;
+  wait_for_broker || true
   {% endif %}
+  echo "[entrypoint] starting uvicorn"
+  exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+  ;;
 
-  "")
-    echo "usage: docker-entrypoint.sh {api{% if use_postgres %}|migrate{% endif %}{% if use_worker %}|worker{% endif %}|<command>}" >&2
-    exit 2
-    ;;
+{% if use_worker %}
+worker)
+  wait_for_broker
+  echo "[entrypoint] starting worker (arq)"
+  exec python -m arq worker.main.WorkerSettings
+  ;;
+{% endif %}
 
-  *)
-    exec "$@"
-    ;;
+"")
+  echo "usage: docker-entrypoint.sh {api{% if use_postgres %}|migrate{% endif %}{% if use_worker %}|worker{% endif %}|<command>}" >&2
+  exit 2
+  ;;
+
+*)
+  exec "$@"
+  ;;
 esac

@@ -6,6 +6,7 @@
 
 ```bash
 cp .env.example .env                    # edit SECRET_KEY at minimum
+# optionally configure LOG_TO_FILE and LOG_PATH
 make install                            # install dependencies
 uv run pre-commit install               # set up git hooks (run once)
 {% if use_postgres or use_worker -%}
@@ -31,7 +32,7 @@ make test       # run all tests
 make lint       # ruff check + format check
 make format     # auto-fix formatting
 make services   # start external services only ({% if use_postgres %}Postgres{% else %}add services here{% endif %})
-make up         # full Docker stack as production
+make up         # full Docker stack as production (ensure docker/prod/logs exists if file logging is enabled)
 make down       # stop Docker stack as production
 ```
 
@@ -120,6 +121,7 @@ This is required — Alembic and the app startup both rely on `db/models.py` to 
 make migration m="add invoices table"
 make migrate
 ```
+
 {% endif %}
 
 ## Environment variables
@@ -131,16 +133,30 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 | `APP_ENV` | `development` | Environment name |
 | `DEBUG` | `true` | `false` in production: disables /docs, tightens CORS, enables structured logging |
 | `SECRET_KEY` | `changeme` | Change this before deploying |
+| `SERVICE_NAME` | `{{ project_name }}` | Used by logging to identify which service this is for |
 | `HOST` | `0.0.0.0` | Bind host |
 | `PORT` | `8000` | Bind port |
+| `LOG_TO_FILE` | `false` | When `true`, logs are appended to `LOG_PATH` |
+| `LOG_PATH` | `logs/app.log` | Path to the log file when `LOG_TO_FILE=true` |
 {% if use_postgres %}| `DATABASE_URL` | `postgresql+asyncpg://...` | Async SQLAlchemy connection URL |
 {% endif %}
+
+## Production logging setup
+
+If `LOG_TO_FILE=true`, create the Docker log directory before running the production stack:
+
+```bash
+mkdir -p docker/prod/logs
+sudo chown -R 10001:10001 docker/prod/logs
+```
 
 ## Production checklist
 
 - [ ] Set `DEBUG=false`
 - [ ] Set a strong random `SECRET_KEY`
 - [ ] Set `APP_ENV=production`
+- [ ] Configure `LOG_TO_FILE` and `LOG_PATH` as needed
+- [ ] Create `docker/prod/logs` and set ownership if using file logging
 {% if use_postgres %}
 - [ ] Point `DATABASE_URL` at your production database
 - [ ] Run `make migrate` on first deploy

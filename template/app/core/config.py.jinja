@@ -20,7 +20,8 @@ class Settings(BaseSettings):
 
     # Logging
     LOG_TO_FILE: bool = False
-    LOG_DIR: str = "/app/logs"
+    LOG_PATH: str = "logs/app.log"
+    SERVICE_NAME: str = "{{ project_name }}"
 
 
 settings = Settings()

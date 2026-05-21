@@ -19,10 +19,16 @@ services:
 
     env_file: ../../.env
 
+    command: ["api"]
+    volumes:
+      - ./logs:/app/logs
+
     environment:
       APP_ENV: production
       DEBUG: "false"
-      RUN_MODE: api
+      LOG_TO_FILE: "true"
+      LOG_PATH: "/app/logs/worker.log"
+      SERVICE_NAME: "app"
 
       {% if use_postgres %}
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/{{ project_name }}
@@ -53,10 +59,16 @@ services:
 
     env_file: ../../.env
 
+    command: ["worker"]
+    volumes:
+      - ./logs:/app/logs
+
     environment:
       APP_ENV: production
       DEBUG: "false"
-      RUN_MODE: worker
+      LOG_TO_FILE: "true"
+      LOG_PATH: "/app/logs/worker.log"
+      SERVICE_NAME: "worker"
 
       {% if use_postgres %}
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/{{ project_name }}
@@ -120,10 +132,16 @@ services:
 
     env_file: ../../.env
 
+		command: ["migrate"]
+    volumes:
+      - ./logs:/app/logs
+
     environment:
       APP_ENV: production
       DEBUG: "false"
-      RUN_MODE: migrate
+      LOG_TO_FILE: "true"
+      LOG_PATH: "/app/logs/migrate.log"
+      SERVICE_NAME: "migrate"
 
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/{{ project_name }}
 

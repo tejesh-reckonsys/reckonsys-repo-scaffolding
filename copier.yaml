@@ -2,6 +2,26 @@ _subdirectory: template
 _templates_suffix: .jinja
 _answers_file: .copier-answers.yml
 
+_message_after_copy: |
+  Setup steps:
+
+    cp .env.example .env
+    make install
+    uv run pre-commit install
+
+  Optional:
+
+    make format
+
+  If enabling LOG_TO_FILE in production:
+
+    mkdir -p docker/prod/logs
+    sudo chown -R 10001:10001 docker/prod/logs
+
+  Start the app:
+
+    make dev
+
 project_name:
     type: str
     help: "Project name (slug, e.g. my-service)"
