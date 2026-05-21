@@ -40,8 +40,9 @@ services:
       {% if use_postgres -%}
       db:
         condition: service_healthy
-      {% endif %}
-  {% if use_worker %}
+      {%- endif %}
+
+  {% if use_worker -%}
   worker:
     container_name: {{ project_name }}-prod-worker
     build:
@@ -70,7 +71,8 @@ services:
       {% endif -%}
       redis:
         condition: service_healthy
-  {% endif %}
+  {%- endif %}
+
   {% if use_postgres -%}
   db:
     image: postgres:18
@@ -86,7 +88,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-  {% endif %}
+  {%- endif %}
+
   {% if use_worker -%}
   redis:
     image: redis:8-alpine
@@ -99,7 +102,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-  {% endif %}
+  {%- endif %}
+
   {% if use_postgres -%}
   migrate:
     container_name: {{ project_name }}-prod-migrate
@@ -120,7 +124,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-  {% endif %}
+  {%- endif %}
+
 
 volumes:
   {% if use_postgres -%}
@@ -128,5 +133,5 @@ volumes:
   {% endif -%}
   {% if use_worker -%}
   redis_data:
-  {% endif -%}
+  {%- endif %}
 
