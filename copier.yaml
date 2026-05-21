@@ -3,24 +3,9 @@ _templates_suffix: .jinja
 _answers_file: .copier-answers.yml
 
 _message_after_copy: |
-  Setup steps:
+  Setup complete!
 
-    cp .env.example .env
-    make install
-    uv run pre-commit install
-
-  Optional:
-
-    make format
-
-  If enabling LOG_TO_FILE in production:
-
-    mkdir -p docker/prod/logs
-    sudo chown -R 10001:10001 docker/prod/logs
-
-  Start the app:
-
-    make dev
+  Please check the README.md for next steps!
 
 project_name:
     type: str

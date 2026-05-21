@@ -8,6 +8,7 @@
 cp .env.example .env                    # edit SECRET_KEY at minimum
 # optionally configure LOG_TO_FILE and LOG_PATH
 make install                            # install dependencies
+git init -b main                        # git is required for setting pre-commit
 uv run pre-commit install               # set up git hooks (run once)
 {% if use_postgres or use_worker -%}
 make services                           # start external services (Docker required)
@@ -17,6 +18,9 @@ make migration m="Initial migration"    # Generate mirations
 make migrate                            # apply migrations (first run and after new migrations)
 {% endif -%}
 make dev                                # start server at http://localhost:8000
+{% if use_worker -%}
+make worker                             # Starts arq worker (run in new tab)
+{% endif -%}
 ```
 
 {% if use_postgres or use_worker %}

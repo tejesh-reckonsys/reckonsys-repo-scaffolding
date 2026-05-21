@@ -2,7 +2,7 @@
 name: {{ project_name }}
 
 services:
-{% if use_postgres %}
+{% if use_postgres -%}
   db:
     image: postgres:18
     container_name: {{ project_name }}-postgres
@@ -20,21 +20,24 @@ services:
       timeout: 5s
       retries: 5
 {% endif %}
-{% if use_worker %}
+{% if use_worker -%}
   redis:
     image: redis:8-alpine
     container_name: {{ project_name }}-redis
     ports:
       - "${REDIS_PORT:-{{ redis_port }}}:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
-{% endif %}
-{% if use_postgres %}
-
+{% endif -%}
+{% if use_postgres and use_worker %}
 volumes:
-  postgres_data:
+  {% if use_postgres %}postgres_data:{% endif %}
+  {% if use_worker %}redis_data:{% endif %}
 {% endif %}
 {% endif %}
