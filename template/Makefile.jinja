@@ -8,6 +8,12 @@
 .PHONY: install dev test lint format build up services down shell
 {% endif %}
 
+{% if use_postgres or use_worker -%}
+COMPOSE_SERVICES=docker compose -f docker/docker-compose.services.yml
+COMPOSE_TEST=docker compose -f docker/test/docker-compose.test.yml
+
+{% endif -%}
+
 install:
 	uv sync
 
@@ -18,8 +24,24 @@ dev:
 {% endif %}
 	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+{% if use_postgres or use_worker -%}
+test:
+	@set -e; \
+	$(COMPOSE_TEST) up -d --wait; \
+	{% if use_postgres -%}POSTGRES_PORT=$$($(COMPOSE_TEST) port db 5432 | cut -d: -f2); \
+	export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:$$POSTGRES_PORT/{{ project_name }}"; \
+	{% endif -%}
+	{% if use_worker -%}REDIS_PORT=$$($(COMPOSE_TEST) port redis 6379 | cut -d: -f2); \
+	export REDIS_URL="redis://localhost:$$REDIS_PORT/0"; \
+	{% endif -%}
+	uv run pytest; \
+	TEST_EXIT_CODE=$$?; \
+	$(COMPOSE_TEST) down -v --remove-orphans; \
+	exit $$TEST_EXIT_CODE
+{% else %}
 test:
 	uv run pytest
+{% endif %}
 
 lint:
 	uv run ruff check .
@@ -35,8 +57,10 @@ up:
 	docker compose -f docker/prod/docker-compose.yml build
 	docker compose -f docker/prod/docker-compose.yml up -d
 
+{% if use_postgres or use_worker -%}
 services:
-	docker compose -f docker/docker-compose.services.yml up -d
+	$(COMPOSE_SERVICES) up -d
+{% endif %}
 
 down:
 	docker compose -f docker/prod/docker-compose.yml down

@@ -1,0 +1,58 @@
+{% if use_postgres or use_worker %}
+name: {{ project_name }}-test
+
+services:
+  {% if use_postgres -%}
+  db:
+    image: postgres:18
+    container_name: {{ project_name }}-postgres-test
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: {{ project_name }}
+
+    # Random host port
+    ports:
+      - "5432"
+
+    # Fully ephemeral DB for tests
+    tmpfs:
+      - /var/lib/postgresql/data:rw
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  {%- endif %}
+
+  {% if use_worker -%}
+  redis:
+    image: redis:8-alpine
+    container_name: {{ project_name }}-redis-test
+
+    # Random host port
+    ports:
+      - "6379"
+
+    # Fully ephemeral Redis
+    tmpfs:
+      - /data:rw
+
+    command:
+      [
+        "redis-server",
+        "--save",
+        "",
+        "--appendonly",
+        "no"
+      ]
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  {% endif %}
+{% endif %}

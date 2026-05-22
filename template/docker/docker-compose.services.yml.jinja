@@ -35,9 +35,7 @@ services:
       timeout: 5s
       retries: 5
 {% endif %}
-{% if use_postgres and use_worker %}
 volumes:
   {% if use_postgres %}postgres_data:{% endif %}
   {% if use_worker %}redis_data:{% endif %}
-{% endif %}
 {% endif %}
