@@ -29,7 +29,8 @@ test:
 	@set -e; \
 	$(COMPOSE_TEST) up -d --wait; \
 	{% if use_postgres -%}POSTGRES_PORT=$$($(COMPOSE_TEST) port db 5432 | cut -d: -f2); \
-	export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:$$POSTGRES_PORT/{{ project_name }}"; \
+	export DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:$$POSTGRES_PORT/{{ project_name }}"; \
+	uv run alembic upgrade head; \
 	{% endif -%}
 	{% if use_worker -%}REDIS_PORT=$$($(COMPOSE_TEST) port redis 6379 | cut -d: -f2); \
 	export REDIS_URL="redis://localhost:$$REDIS_PORT/0"; \

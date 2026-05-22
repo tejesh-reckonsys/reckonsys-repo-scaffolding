@@ -1,14 +1,58 @@
 from collections.abc import AsyncGenerator
+{% if use_postgres %}import contextlib{% endif %}
 
-import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+{% if use_postgres %}from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine{% endif %}
 
+{% if use_postgres %}from app.core.config import settings{% endif %}
 from app.main import app
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app),
+        base_url="http://test",
     ) as c:
         yield c
+
+{% if use_postgres %}
+@pytest_asyncio.fixture
+async def test_engine():
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        pool_pre_ping=True,
+    )
+    yield engine
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def db_session(test_engine):
+    """
+    Transactional async DB session per test.
+
+    - Uses isolated test engine (NOT app global engine)
+    - Each test runs in a transaction
+    - Uses SAVEPOINT to avoid commit/rollback conflicts
+    - Rolls back after test to keep DB clean
+    """
+
+    async with test_engine.connect() as connection:
+        transaction = await connection.begin()
+
+        SessionLocal = async_sessionmaker(
+            bind=connection,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
+
+        async with SessionLocal() as session:
+            try:
+                yield session
+            finally:
+                with contextlib.suppress(Exception):
+                    await transaction.rollback()
+{% endif %}
