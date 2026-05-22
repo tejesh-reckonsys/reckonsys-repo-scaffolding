@@ -37,7 +37,7 @@ The template asks five questions. Everything else is decided.
 ## Quickstart
 
 ```bash
-uvx copier copy git+https://github.com/reckonsys/reckonsys-repo-scaffolding.git my-new-service
+uvx copier copy gh:tejesh-reckonsys/reckonsys-repo-scaffolding.git my-new-service
 cd my-new-service
 make install
 make dev        # app running at http://localhost:8000
